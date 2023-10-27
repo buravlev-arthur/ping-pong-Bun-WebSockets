@@ -2,6 +2,8 @@
 
 _Ping Pong_ - is a replica of the computer game which was developed for [Atari](https://en.wikipedia.org/wiki/Atari,_Inc.) computers by [Allan Alcorn](https://en.wikipedia.org/wiki/Allan_Alcorn) in 1970 year. It's a web-oriented network game, thus you need a second player on any another desktop PC or laptop.
 
+![image](https://github.com/buravlev-arthur/ping-pong-Bun-WebSockets/assets/14940878/17a8bad6-f72e-4c14-9c12-e35ed6ca5a68)
+
 Demo: [188.225.84.218:81](http://188.225.84.218:81/)
 
 ## Stack of technologies
