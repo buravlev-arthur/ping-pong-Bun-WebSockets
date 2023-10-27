@@ -1,7 +1,8 @@
 import Game from './Game';
+import { playerYLimits, playerSize, maxPoints } from '../const';
 
 export default class Player {
-    private yLimit: Record<string, number> = { min: 0, max: 400 };
+    private yLimit: Record<string, number> = playerYLimits;
     private racketYAlpha: Record<string, number> = {
         'ArrowUp': 1,
         'ArrowDown': -1,
@@ -58,7 +59,7 @@ export default class Player {
     }
 
     isWinner(): boolean {
-        return this.score === 11;
+        return this.score === maxPoints;
     }
 
     getSessionId() {
@@ -68,7 +69,7 @@ export default class Player {
     getPlayerCoordsRange() {
         return [
             this.racketCoordY,
-            this.racketCoordY + 100, 
+            this.racketCoordY + playerSize, 
         ]
     };
 

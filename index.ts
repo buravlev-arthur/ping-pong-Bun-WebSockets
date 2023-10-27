@@ -1,8 +1,9 @@
 import startServer from './src/server';
+import { messages, host } from './src/const';
 
 const initApp = () => {
     const server = startServer({});
-    console.log(`WebSocket server is running on: ws://localhost:${server.port}`);
+    console.log(`${messages.serverIsRunning} ${host}:${server.port}`);
 };
 
 initApp();

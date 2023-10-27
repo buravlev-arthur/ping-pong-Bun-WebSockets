@@ -1,11 +1,21 @@
 import Player from './Player';
 import Game from './Game';
 import type { Server } from 'bun';
+import {
+    ballLimits,
+    xPlayersCoords,
+    ballPositionTolerance,
+    ballInitParams,
+    ballChangeSpeedRatio,
+    ballSize,
+    playerThird,
+    playerInitParams,
+} from '../const';
 
 export default class Ball {
-    private xLimits: { min: number, max: number } = { min: 0, max: 790 };
-    private yLimits: { min: number, max: number } = { min: 0, max: 490 };
-    private playersCoords: number[] = [ 50, 740 ];
+    private xLimits: { min: number, max: number } = ballLimits.xLimits;
+    private yLimits: { min: number, max: number } = ballLimits.yLimits;
+    private playersCoords: number[] = xPlayersCoords;
 
     private currentCoords: number[] = [ 0, 0 ];
     private radPi: number = 180;
@@ -23,7 +33,7 @@ export default class Ball {
     }   
 
     private getCoordsAlpha(): number[] {
-        const rad = this.degrees * (Math.PI / 180);
+        const rad = this.degrees * (Math.PI / this.radPi);
         const sin = Math.sin(Number(rad.toFixed(5)));
         const cos = Math.cos(Number(rad.toFixed(5)));
         return [
@@ -41,18 +51,17 @@ export default class Ball {
         const [ x, y ] = ballCoords;
         const [ xPlayerLeft, xPlayerRight ] = this.playersCoords;
         const degrees = this.degrees;
-        const tolerance = 10;
 
         if (
-            ((x >= (xPlayerLeft - tolerance) && x <= (xPlayerLeft + tolerance)))
-            && (degrees > 180 && degrees < 360)
+            ((x >= (xPlayerLeft - ballPositionTolerance) && x <= (xPlayerLeft + ballPositionTolerance)))
+            && (degrees > this.radPi && degrees < this.radPi * 2)
             && (y >= leftPlayerCoordsRange[0] && y <= (leftPlayerCoordsRange[1] - ballSize))
         ) {
             return xPlayerLeft;
         }
         if (
-            (x >= (xPlayerRight - tolerance) && x <= (xPlayerRight + tolerance))
-            && (degrees > 0 && degrees < 180)
+            (x >= (xPlayerRight - ballPositionTolerance) && x <= (xPlayerRight + ballPositionTolerance))
+            && (degrees > 0 && degrees < this.radPi)
             && (y >= rightPlayerCoordsRange[0] && y <= (rightPlayerCoordsRange[1] - ballSize))
         ) {
             return xPlayerRight;
@@ -61,10 +70,8 @@ export default class Ball {
     }
 
     getCoords(): { x: number, y: number } {
-        return {
-            x: this.currentCoords[0],
-            y: this.currentCoords[1],
-        }
+        const [ x, y ] = this.currentCoords;
+        return { x, y };
     }
 
     setBallData(
@@ -79,8 +86,12 @@ export default class Ball {
 
     changeBallSpeed(player: Player): number {
         return player.isMoving()
-        ? this.speed * 1.2
-        : Math.max(this.speed / 1.2, 5);
+        ? this.speed * ballChangeSpeedRatio
+        : Math.max(this.speed / ballChangeSpeedRatio, ballInitParams.speed);
+    }
+
+    getRandomAngle(): number {
+        return 45 + (Math.round(Math.random() * 20) - 10);
     }
 
     moveBall(
@@ -92,10 +103,8 @@ export default class Ball {
         const [ x, y ] = this.currentCoords;
         const leftPlayerCoordsRange = leftPlayer.getPlayerCoordsRange();
         const rightPlayerCoordsRange = rightPlayer.getPlayerCoordsRange();
-        const playerThird = Math.round((leftPlayerCoordsRange[1] - leftPlayerCoordsRange[0]) / 3);
-        const ballSize = 10;
         const initBallCoords = [
-            Math.round(this.xLimits.max /2),
+            Math.round(this.xLimits.max / 2),
             Math.round(this.yLimits.max / 2)
         ];
 
@@ -103,7 +112,7 @@ export default class Ball {
             return;
         }
 
-        // если шар попал в один из углов
+        // if the ball is on same angle
         if (x == this.xLimits.min && y == this.yLimits.min) {
             this.degrees = this.radPi / 4;
         } 
@@ -116,23 +125,23 @@ export default class Ball {
         else if (x == this.xLimits.max && y == this.yLimits.min) {
             this.degrees = this.radPi / 4 * 7;
         }
-        // если шар попал в верхний или нижний края
+        // if the ball is on top or bottom borders
         else if (y == this.yLimits.min || y == this.yLimits.max) {
-            this.degrees = this.degrees <= 180
+            this.degrees = this.degrees <= this.radPi
                 ? this.radPi - this.degrees
                 : this.radPi * 3 - this.degrees;
         }
-        // если шар попал в левого игрока
+        // if the ball around a left player
         else if (
                 (x == this.playersCoords[0])
                 && (y >= leftPlayerCoordsRange[0] && y <= (leftPlayerCoordsRange[1] - ballSize))
         ) {
             let shift = 0;
-            const randomNumber = 45 + (Math.round(Math.random() * 20) - 10);
+            const random = this.getRandomAngle();
             if (y < (leftPlayerCoordsRange[0] + playerThird)) {
-                shift += randomNumber;
+                shift += random;
             } else if (y > (leftPlayerCoordsRange[1] - playerThird)) {
-                shift -= randomNumber;
+                shift -= random;
             }
             const newDegress = this.radPi * 2 - this.degrees + shift;
             const newSpeed = this.changeBallSpeed(leftPlayer);
@@ -142,17 +151,17 @@ export default class Ball {
                 newSpeed
             );
         }
-        // если шар попал в правого игрока
+        // if the ball around a right player
         else if (
             (x >= this.playersCoords[1] && x < this.xLimits.max)
             && (y >= rightPlayerCoordsRange[0] && y <= (rightPlayerCoordsRange[1] - ballSize))
         ) {
             let shift = 0;
-            const randomNumber = 45 + (Math.round(Math.random() * 20) - 10);
+            const random = this.getRandomAngle();
             if (y < (rightPlayerCoordsRange[0] + playerThird)) {
-                shift -= randomNumber;
+                shift -= random;
             } else if (y > (rightPlayerCoordsRange[1] - playerThird)) {
-                shift += randomNumber;
+                shift += random;
             }
             const newDegress = this.radPi * 2 - this.degrees + shift;
             const newSpeed = this.changeBallSpeed(rightPlayer);
@@ -162,7 +171,7 @@ export default class Ball {
                 newSpeed,
             );
         }
-        // если шар ушёл за левую линию
+        // if the ball has leaved the field (to left)
         else if ( x === this.xLimits.min ) {
             rightPlayer.addPoint();
             if (rightPlayer.isWinner()) {
@@ -170,12 +179,12 @@ export default class Ball {
                 game.restartGameProcess(server, channel);
             } else {
                 [ leftPlayer, rightPlayer ]
-                    .forEach((player) => player.resetPlayer(200));
-                this.setBallData(initBallCoords, 270, 5);
+                    .forEach((player) => player.resetPlayer(playerInitParams.racketCoordY));
+                this.setBallData(initBallCoords, this.radPi * 1.5, ballInitParams.speed);
                 game.pauseGameProcess();
             }
         }
-        // если шар ушёл за правую линию
+        // if the ball has leaved the field (to right)
         else if ( x === this.xLimits.max ) {
             leftPlayer.addPoint();
             if (leftPlayer.isWinner()) {
@@ -183,8 +192,8 @@ export default class Ball {
                 game.restartGameProcess(server, channel);
             } else {
                 [ leftPlayer, rightPlayer ]
-                    .forEach((player) => player.resetPlayer(200));
-                this.setBallData(initBallCoords, 90, 5);
+                    .forEach((player) => player.resetPlayer(playerInitParams.racketCoordY));
+                this.setBallData(initBallCoords, this.radPi / 2, ballInitParams.speed);
                 game.pauseGameProcess();
             }
         }

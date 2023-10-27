@@ -1,6 +1,14 @@
 import Ball from './Ball';
 import Player from './Player';
 import type { Server } from 'bun';
+import {
+    maxPlayers,
+    loopTimeout,
+    pauseTimeout,
+    ballInitParams,
+    messages,
+    secBeforeNewGame,
+} from '../const';
 
 export default class Game {
     private players: Player[] = [];
@@ -61,36 +69,40 @@ export default class Game {
                     play: this.play,
                 })
             );
-        }, 10);
+        }, loopTimeout);
     };
 
     pauseGameProcess(): void {
         this.play = false;
         setTimeout(() => {
-            if (this.getPlayersCount() < 2) {
+            if (this.getPlayersCount() < maxPlayers) {
                 return;
             }
             this.play = true;
-        }, 2000);
+        }, pauseTimeout);
     }
 
     resetGameProcess(): void {
         this.play = false;
         this.players.forEach((player) => player.resetPlayer(200, 0, 20));
-        this.ball.setBallData([ 50, 240 ], 270, 5);
+        this.ball.setBallData(
+            ballInitParams.coords,
+            ballInitParams.degrees,
+            ballInitParams.speed
+        );
     }
 
     restartGameProcess(server: Server, channel: string): void {
-        let timer: number = 4;
+        let timer: number = secBeforeNewGame;
         this.play = false;
         const interval = setInterval(() => {
-            if (this.getPlayersCount() < 2) {
+            if (this.getPlayersCount() < maxPlayers) {
                 clearInterval(interval);
                 return;
             }
             server.publish(
                 channel,
-                JSON.stringify({ message: `New game in: ${timer - 1}` })
+                JSON.stringify({ message: `${messages.newGame} ${timer - 1}` })
             );
             timer -= 1;
             if (timer === 2) {

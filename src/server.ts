@@ -1,16 +1,24 @@
 import uniqid from 'uniqid';
-import Game from '../models/Game';
-import Ball from '../models/Ball';
-import Player from '../models/Player';
+import Game from './models/Game';
+import Ball from './models/Ball';
+import Player from './models/Player';
 import type { Server } from 'bun';
+import {
+    defaultPort,
+    ballInitParams,
+    playerInitParams,
+    maxPlayers,
+    messages,
+} from './const';
 
 export default (games: Record<string, Game>): Server => {
     const server: Server = Bun.serve<{ sessionId: string, channel: string }>({
-        port: process.env.PORT ?? 3577,
+        port: process.env.PORT ?? defaultPort,
     
         fetch(req, server) {
             const sessionId = req.headers.get('cookie')?.split('sessionId=')[1] ?? uniqid();
             const params = new URL(req.url);
+            // fetching channel name of this game
             const channel = params.searchParams.get('channel') ?? 'default';
     
             if (server.upgrade(req, {
@@ -33,38 +41,40 @@ export default (games: Record<string, Game>): Server => {
         websocket: {
             open(ws) {
                 const { channel, sessionId } = ws.data;
-                // если новое поле - кидаем на поле мяч
+                // if it's new game then creating a new game instanse
+                const { coords, degrees, speed } = ballInitParams;
                 if (!games[channel]) {
                     games[channel] = new Game(
-                        new Ball([ 50, 240 ], 270, 5),
+                        new Ball(coords, degrees, speed),
                         [],
                         false,
                         null
                     );
-                    // запускаем игровой процесс
+                    // starting game loop
                     games[channel].startGameProcess(server, channel);
-                    // сообщаем, что ждём второго игрока
-                    ws.send(JSON.stringify({ message: 'Waiting 2nd player...' }));
+
+                    ws.send(JSON.stringify({ message: messages.waiting2ndPlayer }));
                 }
     
-                // если ещё нет игроков или только один - добавляем игрока
-                // и подписываем его на рассылку
+                // if there are no players or there is one
+                // then add a new player and subscribe him on the channel
                 if (games[channel].getPlayersCount() < 2) {
-                    games[channel].addPlayer(new Player(sessionId, 10, 200));
+                    const { speed, racketCoordY } = playerInitParams;
+                    games[channel].addPlayer(new Player(sessionId, speed, racketCoordY));
                     ws.subscribe(channel);
     
-                    // если подключился второй игрок - запускаем игру
-                    if (games[channel].getPlayersCount() === 2) {
+                    // if it's a second player then starting the game
+                    if (games[channel].getPlayersCount() === maxPlayers) {
                         games[channel].restartGameProcess(server, channel);
                     }
-                // если уже есть оба игрока - сообщаем об этом
+                // if the channel is filled (both players) then text about it
                 } else {
-                    ws.send(JSON.stringify({ message: 'The game is in proccess already' }));
+                    ws.send(JSON.stringify({ message: messages.isInProcess }));
                 }
             },
             message(ws, message) {
                 const { channel, sessionId } = ws.data;
-                // ловим нажатие клавиш (вверх/вниз) и двигаем игрока
+                // catch keys pressing (arrow up/arrow down)
                 if (JSON.parse(message as string).key) {
                     const player = games[channel].getPlayerBySessionId(sessionId);
                     if (!player) {
@@ -73,7 +83,7 @@ export default (games: Record<string, Game>): Server => {
                     const { key } = JSON.parse(message as string);
                     player.movePlayer(key, games[channel]);
                 }
-                // отправляем сообщение в канал рассылки
+                // push all recieved messages to the channel
                 ws.publish(channel, message);
             },
             close(ws) {
@@ -81,25 +91,25 @@ export default (games: Record<string, Game>): Server => {
                 if (!games[channel]) {
                     return;
                 }
-                // является ли клиент активным игроком?
+                // is this player is active?
                 const player = games[channel].getPlayerBySessionId(sessionId);
                 
                 if (player) {
-                    // удаляем игрока из игры
+                    // remove player from the game
                     games[channel].removePlayerBySessionId(sessionId);
     
-                    // если игроков не осталось - удаляем комнату и останавливаем игровой процесс
+                    // if there are no players then remove channel and stop game loop
                     if (games[channel].getPlayersCount() === 0) {
                         games[channel].finishGameProcess();
                         delete games[channel];
-                    // иначе сбрасываем игровой процесс и ждём нового игрока
+                    // otherwise reset game process and waiting a new player
                     } else {
                         games[channel].resetGameProcess();
     
                         server.publish(
                             channel,
                             JSON.stringify({
-                                message: 'Waiting 2nd player...',
+                                message: messages.waiting2ndPlayer,
                                 players: games[channel].getAllPlayers(),
                                 play: games[channel].isPlay(),
                             })
