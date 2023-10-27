@@ -1,6 +1,6 @@
 # Ping Pong (Web-version)
 
-_Ping Pong_ - is a replica of the computer game which was developed for [Atari](https://en.wikipedia.org/wiki/Atari,_Inc.) computers by [Allan Alcorn](https://en.wikipedia.org/wiki/Allan_Alcorn) in 1970 year. It's a web-oriented network game, thus you need a second player on any another desktop PC or laptop.
+_Ping Pong_ - is a replica of the computer game which was developed for [Atari](https://en.wikipedia.org/wiki/Atari,_Inc.) computers by [Allan Alcorn](https://en.wikipedia.org/wiki/Allan_Alcorn) in 1970. It's a web-oriented network game, thus you need a second player on any other desktop PC or laptop.
 
 ![image](https://github.com/buravlev-arthur/ping-pong-Bun-WebSockets/assets/14940878/17a8bad6-f72e-4c14-9c12-e35ed6ca5a68)
 
@@ -30,7 +30,7 @@ pm2 start --interpreter $NPM_GLOBALS_PATH index.ts
 
 ### Fontend
 
-Build for frontend deployment is placed on: `<project root>/frontend/dist/`. Use [nginx](https://www.nginx.com/) or any another web-server.
+Build for frontend deployment is placed on: `<project root>/frontend/dist/`. Use [nginx](https://www.nginx.com/) or any other web-server.
 
 Building:
 
