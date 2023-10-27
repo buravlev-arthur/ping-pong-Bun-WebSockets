@@ -1,3 +1,5 @@
+[![Maintainability](https://api.codeclimate.com/v1/badges/23851ad42e2eec2aa7aa/maintainability)](https://codeclimate.com/github/buravlev-arthur/ping-pong-Bun-WebSockets/maintainability)
+
 # Ping Pong (Web-version)
 
 _Ping Pong_ - is a replica of the computer game which was developed for [Atari](https://en.wikipedia.org/wiki/Atari,_Inc.) computers by [Allan Alcorn](https://en.wikipedia.org/wiki/Allan_Alcorn) in 1970. It's a web-oriented network game, thus you need a second player on any other desktop PC or laptop.
