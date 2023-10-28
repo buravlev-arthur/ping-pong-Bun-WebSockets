@@ -133,20 +133,22 @@ export default class Ball {
     }
 
     isBallInAngle(): number | boolean {
+        let newDegrees: number | boolean = false;
         const [ x, y ] = this.currentCoords;
+
         if (x == this.xLimits.min && y == this.yLimits.min) {
-            return this.radPi / 4;
+            newDegrees = this.radPi / 4;
         } 
         else if (x == this.xLimits.min && y == this.yLimits.max) {
-            return this.radPi / 4 * 3;
+            newDegrees = this.radPi / 4 * 3;
         }
         else if (x == this.xLimits.max && y == this.yLimits.max) {
-            return this.radPi / 4 * 5;
+            newDegrees = this.radPi / 4 * 5;
         }
         else if (x == this.xLimits.max && y == this.yLimits.min) {
-            return this.radPi / 4 * 7;
+            newDegrees = this.radPi / 4 * 7;
         }
-        return false;
+        return newDegrees;
     }
 
     isBallOnTopBottomBorder(): number | boolean {
@@ -161,13 +163,14 @@ export default class Ball {
 
     setBallAgainstPlayer(game: Game, playerIndex: number, playerCoordsRange: number[]): void {
         let shift = 0;
+        const reverse = (playerIndex * -2) + 1;
         const player = game.getAllPlayers()[playerIndex];
         const [ , y ] = this.currentCoords;
         const random = this.getRandomAngle();
         if (y < (playerCoordsRange[0] + playerThird)) {
-            shift = !playerIndex ? (shift + random) : (shift - random);
+            shift = (shift + random) * reverse;
         } else if (y > (playerCoordsRange[1] - playerThird)) {
-            shift = !playerIndex ? (shift - random) : (shift + random)
+            shift = (shift - random) * reverse;
         }
         const newDegress = this.radPi * 2 - this.degrees + shift;
         const newSpeed = this.changeBallSpeed(player);
