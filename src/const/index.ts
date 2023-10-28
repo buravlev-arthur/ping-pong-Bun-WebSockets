@@ -58,7 +58,7 @@ export const maxPoints = 10;
 // messages
 export const messages = {
     isInProcess: 'The game is in proccess already',
-    waiting2ndPlayer: 'Waiting 2nd player...',
+    waiting2ndPlayer: 'Waiting for 2nd player...',
     serverIsRunning: 'WebSocket server is running on:',
     newGame: 'New game in:', 
 }
